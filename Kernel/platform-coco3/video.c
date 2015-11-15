@@ -12,8 +12,11 @@ extern video_cmd( char *rlt_data);
 
 */
 
+static int irq;
+
 static void map_for_video()
 {
+	irq=di();
 	*( uint8_t *)0xffa9 = 8;
 	*( uint8_t *)0xffaa = 9;
 }
@@ -22,11 +25,12 @@ static void map_for_kernel()
 {
 	*( uint8_t *)0xffa9 = 1;
 	*( uint8_t *)0xffaa = 2;
+	irqrestore(irq);
 }
 
 static uint8_t *char_addr(unsigned int y1, unsigned char x1)
 {
-	return curpty->base + VT_WIDTH * y1 + (uint16_t) x1;
+	return curpty->base + VT_WIDTH * y1 * 2 + (uint16_t)(x1*2);
 }
 
 void cursor_off(void)
@@ -40,32 +44,39 @@ void cursor_off(void)
 void cursor_on(int8_t y, int8_t x)
 {
 	map_for_video();
-	curpty->csave = *char_addr(y, x);
-	curpty->cpos = char_addr(y, x);
-	*curpty->cpos = VT_MAP_CHAR('_');
+	curpty->csave = *(char_addr(y, x)+1);
+	curpty->cpos = char_addr(y, x)+1;
+		*curpty->cpos = *curpty->cpos ^ 0x3f;
 	map_for_kernel();
 }
 
 void plot_char(int8_t y, int8_t x, uint16_t c)
 {
+	char *p=char_addr(y,x);
 	map_for_video();
-	*char_addr(y, x) = VT_MAP_CHAR(c);
+	*p++ = VT_MAP_CHAR(c);
+	*p = curpty->attr;
 	map_for_kernel();
 }
 
 void clear_lines(int8_t y, int8_t ct)
 {
+	uint16_t wc= ct * VT_WIDTH;
 	map_for_video();
-	unsigned char *s = char_addr(y, 0);
-	memset(s, ' ', ct * VT_WIDTH);
+	uint16_t *s = (uint16_t *)char_addr(y, 0);
+	uint16_t w = ' ' * 0x100 + curpty->attr;
+	while(  wc-- )
+		*s++=w;
 	map_for_kernel();
 }
 
 void clear_across(int8_t y, int8_t x, int16_t l)
 {
 	map_for_video();
-	unsigned char *s = char_addr(y, x);
-	memset(s, ' ', l);
+	uint16_t *s = (uint16_t *)char_addr(y, x);
+	uint16_t w=' ' * 0x100 + curpty->attr;
+	while( l-- )
+		*s++=w;
 	map_for_kernel();
 }
 
@@ -74,16 +85,16 @@ void clear_across(int8_t y, int8_t x, int16_t l)
 void scroll_up(void)
 {
 	map_for_video();
-	memcpy(curpty->base, curpty->base + VT_WIDTH,
-	       VT_WIDTH * VT_BOTTOM);
+	memcpy(curpty->base, curpty->base + VT_WIDTH*2,
+	       VT_WIDTH*2 * VT_BOTTOM);
 	map_for_kernel();
 }
 
 void scroll_down(void)
 {
 	map_for_video();
-	memcpy(curpty->base + VT_WIDTH, curpty->base,
-	       VT_WIDTH * VT_BOTTOM);
+	memcpy(curpty->base + VT_WIDTH*2, curpty->base,
+	       VT_WIDTH*2 * VT_BOTTOM);
 	map_for_kernel();
 }
 
@@ -142,24 +153,24 @@ int gfx_draw_op(uarg_t arg, char *ptr)
 		break;
 	case GFXIOC_WRITE:
 	case GFXIOC_READ:
-		err = EFAULT;
-		goto ret;
-		/* Not implemented yet....
-		   if (l < 8)
-		   return EINVAL;
-		   l -= 8;
-		   if (p[0] > 31 || p[1] > 191 || p[2] > 31 || p[3] > 191 ||
-		   p[0] + p[2] > 32 || p[1] + p[3] > 192 ||
-		   (p[2] * p[3]) > l)
-		   return -EFAULT;
-		   if (arg == GFXIOC_READ) {
-		   video_read(buf);
-		   if (uput(buf + 8, ptr, l))
-		   return EFAULT;
-		   return 0;
-		   }
-		   video_write(buf);
-		*/
+		if (l < 8){
+			err= EINVAL;
+			break;
+		}
+		l -= 8;
+		if (p[0] > 191 || p[1] > 31 || p[2] > 191 || p[3] > 31 ||
+		    p[0] + p[2] > 192 || p[1] + p[3] > 32 ||
+		    (p[2] * p[3]) > l) {
+			err = -EFAULT;
+			break;
+		}
+		if (arg == GFXIOC_READ) {
+			video_read( (char *)0x5e00 );
+			if (uput( (char *)0x5e00 + 8, ptr+10, l-2))
+				err = EFAULT;
+			break;
+		}
+		video_write( (char *)0x5e00 );
 	}
  ret:
 	map_for_kernel();

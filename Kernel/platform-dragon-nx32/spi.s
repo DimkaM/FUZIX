@@ -27,13 +27,13 @@ _spi_setup:
 	lda #0x0F
 	sta SPISIE		; selects off, IRQs off
 	cmpa SPISIE
-	beq nospi
+	bne nospi
 	lda SPIDATA		; clear TC
 	lda SPISTATUS
-	bpl nospi 		; TC not clear -> no spi present
+	bmi nospi 		; TC not clear -> no spi present
 	sta SPIDATA		; start a transmit, TC should now be clear
 	lda SPISTATUS
-	bmi spigood
+	bpl spigood
 nospi:	clrb
 	rts
 spigood:
@@ -56,13 +56,13 @@ clkset:	std SPICTRL
 ;
 ;	For multiple cards these need to look at the card #
 ;
-_sd_spi_lower_cs:
+_sd_spi_raise_cs:
 	lda SPISIE
 	ora #SPICS
 	sta SPISIE
 	rts
 
-_sd_spi_raise_cs:
+_sd_spi_lower_cs:
 	lda SPISIE
 	anda #0xFF-SPICS
 	sta SPISIE
@@ -103,13 +103,13 @@ _sd_spi_receive_sector:
 	pshs y,dp
 	lda #0xFF
 	tfr a,dp
-	lda _blk_op + 2
-	beq rdspi
-	jsr map_process_always
-rdspi:	ldx _blk_op
+	ldx _blk_op
 	leay 512,x
 	sty endspi
-	lda #0x14		; FRX on, external clock on
+	lda _blk_op+2
+	beq rdspi
+	jsr map_process_always
+rdspi:	lda #0x14		; FRX on, external clock on
 	sta SPICTRL
 read8:
 	lda <SPIDATA
@@ -135,12 +135,14 @@ _sd_spi_transmit_sector:
 	pshs y,dp
 	lda #0xFF
 	tfr a,dp
-	lda _blk_op + 2
-	beq wrspi
-	jsr map_process_always
-wrspi:	ldx _blk_op
+	ldx _blk_op
 	leay 512,x
 	sty endspi
+	lda _blk_op+2
+	beq wrspi
+	jsr map_process_always
+wrspi:	lda #0x14		; FRX on, external clock on
+	sta SPICTRL
 write8:
 	ldd ,x++
 	sta <SPIDATA

@@ -3,6 +3,17 @@
 #include <kdata.h>
 #include <stdarg.h>
 
+/* Error checking */
+
+void validchk(uint16_t dev, const char *p)
+{
+        if (!validdev(dev)) {
+                kputs(p);
+                kputchar(':');
+                panic(PANIC_INVD);
+        }
+}
+
 /* Buffer pool management */
 /*********************************************************************
 The high-level interface is through bread() and bfree().
@@ -35,7 +46,7 @@ uint8_t *bread(uint16_t dev, blkno_t blk, bool rewrite)
 
 	if ((bp = bfind(dev, blk)) != NULL) {
 		if (bp->bf_busy == BF_BUSY)
-			panic("want busy block");
+			panic(PANIC_WANTBSYB);
 		else if (bp->bf_busy == BF_FREE)
 			bp->bf_busy = BF_BUSY;
 		/* BF_SUPERBLOCK is fine */
@@ -175,7 +186,7 @@ bufptr freebuf(void)
 		}
 	}
 	if (!oldest)
-		panic("no free buffers");
+		panic(PANIC_NOFREEB);
 
 	if (oldest->bf_dirty) {
 		if (bdwrite(oldest) == -1)
@@ -226,8 +237,8 @@ Any device other than a disk will have only raw access.
 int bdread(bufptr bp)
 {
 	uint16_t dev = bp->bf_dev;
-	if (!validdev(dev))
-		panic("bdread: invalid dev");
+
+	validchk(dev, PANIC_BDR);
 
 	udata.u_buf = bp;
 	return ((*dev_tab[major(dev)].dev_read) (minor(dev), 0, 0));
@@ -237,8 +248,8 @@ int bdread(bufptr bp)
 int bdwrite(bufptr bp)
 {
 	uint16_t dev = bp->bf_dev;
-	if (!validdev(dev))
-		panic("bdwrite: invalid dev");
+
+	validchk(dev, PANIC_BDW);
 
 	udata.u_buf = bp;
 	return ((*dev_tab[major(dev)].dev_write) (minor(dev), 0, 0));
@@ -246,15 +257,13 @@ int bdwrite(bufptr bp)
 
 int cdread(uint16_t dev, uint8_t flag)
 {
-	if (!validdev(dev))
-		panic("cdread: invalid dev");
+	validchk(dev, PANIC_CDR);
 	return ((*dev_tab[major(dev)].dev_read) (minor(dev), 1, flag));
 }
 
 int cdwrite(uint16_t dev, uint8_t flag)
 {
-	if (!validdev(dev))
-		panic("cdwrite: invalid dev");
+	validchk(dev, PANIC_CDW);
 	return ((*dev_tab[major(dev)].dev_write) (minor(dev), 1, flag));
 }
 
@@ -269,8 +278,7 @@ int d_open(uint16_t dev, uint8_t flag)
 
 int d_close(uint16_t dev)
 {
-	if (!validdev(dev))
-		panic("d_close: bad device");
+	validchk(dev, PANIC_DCL);
         bdrop(dev);
 	return (*dev_tab[major(dev)].dev_close) (minor(dev));
 }

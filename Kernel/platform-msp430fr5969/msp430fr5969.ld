@@ -37,6 +37,8 @@
 OUTPUT_ARCH(msp430)
 ENTRY(_start)
 
+#include "msp430fr5969.ld.h"
+
 MEMORY {
   SFR              : ORIGIN = 0x0000, LENGTH = 0x0010 /* END=0x0010, size 16 */
   PERIPHERAL_8BIT  : ORIGIN = 0x0010, LENGTH = 0x00F0 /* END=0x0100, size 240 */
@@ -106,12 +108,13 @@ MEMORY {
 
   SRAM             : ORIGIN = 0x1C00, LENGTH = 0x0800
 
+  USER             : ORIGIN = USER_BASE, LENGTH = 0xff80-USER_BASE
+
   /* We have a combined udata/kstack block just under the userdata start,
    * The syscall vector is in the two bytes immediately before userspace. */
-  LOROM            : ORIGIN = 0x4400, LENGTH = 0xa180-0x4400
-  UDATA            : ORIGIN = 0xa180, LENGTH = 0xa37e-0xa180
-  SYSCALL          : ORIGIN = 0xa37e, LENGTH = 0x0002
-  USER             : ORIGIN = 0xa380, LENGTH = 0xff80-0xa380
+  UDATA            : ORIGIN = UDATA_BASE, LENGTH = 0x01fe
+  SYSCALL          : ORIGIN = UDATA_BASE+0x01fe, LENGTH = 0x0002
+  LOROM            : ORIGIN = 0x4400, LENGTH = UDATA_BASE-0x4400
 
   /* Our init code goes here. It'll get copied into userspace at startup,
    * so we can discard it; that way we don't have it using up space at
@@ -209,23 +212,41 @@ SECTIONS
 	*(.text.*_trampoline);
   } > INFOMEM
 
-  .boottext : {
-    . = ALIGN(2);
-	*(.text.trap_reboot_high);
-	*(.text.blkdev_alloc);
-	*(.text.blkdev_scan);
-	*/*_discard.o(.text.* .rodata .rodata.*);
-	*/mbr.o(.text.* .rodata .rodata.*);
-	*/start.o(.text.* .rodata .rodata.*);
-	*/start.o(.text.* .rodata .rodata.*);
-  } > USER AT> HIROM
-  PROVIDE (__hirom_base = LOADADDR(.boottext));
-  PROVIDE (__hirom_length = SIZEOF(.boottext));
+  OVERLAY : NOCROSSREFS {
+    .boot_overlay {
+		*(.text.trap_reboot_high);
+		*(.text.blkdev_alloc);
+		*(.text.blkdev_scan);
+		"*/*_discard.o"(.text.* .rodata .rodata.*);
+		"*/mbr.o"(.text.* .rodata .rodata.*);
+		"*/start.o"(.text.* .rodata .rodata.*);
+    }
+	.syscall_exec16_overlay {
+		"*/syscall_exec16.o"(.text.* .rodata .rodata.*);
+	}
+	.syscall_fs_overlay {
+		"*/syscall_fs.o"(.text.* .rodata .rodata.*);
+	}
+	.syscall_fs2_overlay {
+		"*/syscall_fs2.o"(.text.* .rodata .rodata.*);
+	}
+	.syscall_fs3_overlay {
+		"*/syscall_fs3.o"(.text.* .rodata .rodata.*);
+	}
+	.syscall_other_overlay {
+		"*/syscall_other.o"(.text.* .rodata .rodata.*);
+	}
+	.syscall_proc_overlay {
+		"*/syscall_proc.o"(.text.* .rodata .rodata.*);
+	}
+  } > LOROM AT> HIROM
+  PROVIDE (__overlay_start_address = ADDR(.boot_overlay));
+  PROVIDE (__load_length_boot_overlay = SIZEOF(.boot_overlay));
 
   .rodata : {
     . = ALIGN(2);
     *(.rodata.* .rodata .const .const:*)
-  } > LOROM
+  } > LOROM AT> LOROM
 
   .text : {
   	. = ALIGN(2);
@@ -239,11 +260,9 @@ SECTIONS
   .bss : {
     . = ALIGN(2);
     PROVIDE (__bssstart = .);
+	*(.bss.ptab);
     *(.bss.bufpool);
-	*(.bss.blkdev_table);
-	*(.bss.ttydata);
 	*(.bss.swapstack);
-	*(.bss.fs_tab);
     . = ALIGN(2);
     PROVIDE (__bssend = .);
   } > LOROM
