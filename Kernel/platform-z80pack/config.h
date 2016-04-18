@@ -17,6 +17,10 @@
 /* 8 60K banks, 1 is kernel */
 #define MAX_MAPS	7
 #define MAP_SIZE	0xF000U
+/* Level 2 feature set */
+#define CONFIG_LEVEL_2
+/* Networking (not usable yet but for debug/development) */
+#define CONFIG_NET
 
 /* Banks as reported to user space */
 #define CONFIG_BANKS	1

@@ -36,6 +36,21 @@ From UZI by Doug Braun and UZI280 by Stefan Nitschke.
 #define ALIGNDOWN(v) (v)
 #endif
 
+#ifdef CONFIG_LEVEL_2
+#include "level2.h"
+#else
+
+#define jobcontrol_in(x,y)
+#define jobcontrol_out(x,y)
+#define limit_exceeded(x,y) (0)
+#define can_signal(p, sig) \
+	(udata.u_ptab->p_uid == (p)->p_uid || super())
+#define pathbuf()	tmpbuf()
+#define pathfree(tb)	brelse(tb)
+#define dump_core(sig)	sig
+#define in_group(x)	0
+#endif
+
 #define CPM_EMULATOR_FILENAME    "/usr/cpm/emulator"
 
 /* Maximum UFTSIZE can be is 16, then you need to alter the O_CLOEXEC code */
@@ -52,10 +67,14 @@ From UZI by Doug Braun and UZI280 by Stefan Nitschke.
 #ifndef PTABSIZE
 #define PTABSIZE 15      /* Process table size. */
 #endif
-
 #ifndef MAPBASE		/* Usually the start of program and map match */
 #define MAPBASE PROGBASE
 #endif
+
+#ifndef NGROUP
+#define NGROUP		16
+#endif
+
 
 #define MAXTICKS     10   /* Max ticks before switching out (time slice)
                             default process time slice */
@@ -115,6 +134,7 @@ typedef uint16_t blkno_t;    /* Can have 65536 512-byte blocks in filesystem */
 #define BLKSIZE		512
 #define BLKSHIFT	9
 #define BLKMASK		511
+#define BLKOVERSIZE	25	/* Bits 25+ mean we exceeded the file size */
 
 /* Help the 8bit compilers out by preventing any 32bit promotions */
 #define BLKOFF(x)	(((uint16_t)(x)) & BLKMASK)
@@ -156,21 +176,6 @@ typedef struct dinode {
     blkno_t  i_addr[20];
 } dinode;               /* Exactly 64 bytes long! */
 
-struct  stat    /* Really only used by libc */
-{
-	int16_t   st_dev;
-	uint16_t  st_ino;
-	uint16_t  st_mode;
-	uint16_t  st_nlink;
-	uint16_t  st_uid;
-	uint16_t  st_gid;
-	uint16_t  st_rdev;
-	off_t   st_size;
-	uint32_t  st_atime;	/* Break in 2038 */
-	uint32_t  st_mtime;
-	uint32_t  st_ctime;
-};
-
 /* We use the Linux one for compatibility. There's no real Unix 'standard'
    for such things */
 
@@ -207,6 +212,9 @@ struct hd_geometry {
 #define F_SOCK	0140000
 
 #define F_MASK  0170000
+
+/* So we can do all our getmode comparisons in 8bit to help the compilers out */
+#define MODE_R(x)	((uint8_t)((x) >> 8))
 
 #define major(x) ((x) >> 8)
 #define minor(x) ((x) & 0xFF)
@@ -281,12 +289,9 @@ struct mount {
 /* The sleeping range must be together see swap.c */
 #define P_READY         2    /* Runnable   */
 #define P_SLEEP         3    /* Sleeping; can be awakened by signal */
-#define P_XSLEEP        4    /* Sleeping, don't wake up for signal */
-#define P_PAUSE         5    /* Sleeping for pause(); can wakeup for signal */
-#define P_WAIT          6    /* Executed a wait() */
-#define P_FORKING       7    /* In process of forking; do not mess with */
-#define P_ZOMBIE2       8    /* Exited but code pages still valid. */
-#define P_ZOMBIE        9    /* Exited. */
+#define P_STOPPED       4    /* Sleeping, don't wake up for signal */
+#define P_FORKING       5    /* In process of forking; do not mess with */
+#define P_ZOMBIE        6    /* Exited. */
 
 
 /* 0 is used to mean 'check we could signal this process' */
@@ -363,7 +368,8 @@ typedef struct p_tab {
 #ifdef udata
     struct u_data *p_udata;	/* Udata pointer for platforms using dynamic udata */
 #endif
-    /* Everything below here is overlaid by time info at exit */
+    /* Everything below here is overlaid by time info at exit.
+	 * Make sure it's 32-bit aligned. */
     uint16_t    p_priority;     /* Process priority */
     uint32_t    p_pending;      /* Bitmask of pending signals */
     uint32_t    p_ignored;      /* Bitmask of ignored signals */
@@ -378,6 +384,7 @@ typedef struct p_tab {
 /**HP**/
     uint16_t	p_pgrp;		/* Process group */
     uint8_t	p_nice;
+    uint8_t	p_event;	/* Events */
     usize_t	p_top;		/* Copy of u_top */
 #ifdef CONFIG_PROFIL
     uint8_t	p_profscale;
@@ -385,6 +392,9 @@ typedef struct p_tab {
     uaddr_t	p_profsize;
     uaddr_t	p_profoff;
 #endif    
+#ifdef CONFIG_LEVEL_2
+    uint16_t	p_session;
+#endif
 } p_tab, *ptptr;
 
 typedef struct u_data {
@@ -437,6 +447,13 @@ typedef struct u_data {
     inoptr	u_root;		/* Index into inode table of / */
     inoptr	u_rename;	/* Used in n_open for rename() checking */
     inoptr	u_ctty;		/* Controlling tty */
+#ifdef CONFIG_LEVEL_2
+    uint16_t    u_groups[NGROUP]; /* Group list */
+    uint8_t	u_ngroup;
+    uint8_t	u_flags;
+#define U_FLAG_NOCORE		1	/* Set if no core dump */
+    struct rlimit u_rlimit[NRLIMIT];	/* Resource limits */
+#endif
 } u_data;
 
 
@@ -459,8 +476,10 @@ struct s_argblk {
 
 
 /* waitpid options */
-#define WNOHANG		1	/* don't support others yet */
-
+#define WNOHANG		1
+#define WUNTRACED	2
+#define _WSTOPPED	0xFF
+#define W_COREDUMP	0x80
 
 /* Open() parameters. */
 
@@ -545,6 +564,22 @@ struct s_argblk {
 #define EALREADY	39		/* Operation already in progress */
 #define EADDRINUSE	40		/* Address already in use */
 #define EADDRNOTAVAIL	41		/* Address not available */
+#define ENOSYS		42		/* No such system call */
+#define EPFNOSUPPORT	43		/* Protocol not supported */
+#define EOPNOTSUPP	44		/* Operation not supported on transport
+                                           endpoint */
+#define ECONNRESET	45		/* Connection reset by peer */
+#define ENETDOWN	46		/* Network is down */
+#define EMSGSIZE	47		/* Message too long */
+
+#define ETIMEDOUT	48		/* Connection timed out */
+#define ECONNREFUSED	49		/* Connection refused */
+#define EHOSTUNREACH	50		/* No route to host */
+#define EHOSTDOWN	51		/* Host is down */
+#define	ENETUNREACH	52		/* Network is unreachable */
+#define ENOTCONN	53		/* Transport endpoint is not connected */
+#define EINPROGRESS	54		/* Operation now in progress */
+#define ESHUTDOWN	55		/* Cannot send after transport endpoint shutdown */
 
 /*
  * ioctls for kernel internal operations start at 0x8000 and cannot be issued
@@ -584,6 +619,10 @@ struct s_argblk {
  */
 
 /*
+ *	Networking ioctls 04xx (see net_native.h)
+ */
+
+/*
  *	System info shared with user space
  */
 struct sysinfoblk {
@@ -597,6 +636,7 @@ struct sysinfoblk {
   uint16_t config;		/* Config flag mask */
 #define CONF_PROFIL		1
 #define CONF_NET		2	/* Hah.. 8) */
+#define CONF_LEVEL_2		4
   uint16_t loadavg[3];
   uint32_t spare2;
     			        /* Followed by uname strings */
@@ -737,7 +777,7 @@ extern bool super(void);
 extern bool esuper(void);
 extern uint8_t getperm(inoptr ino);
 extern void setftime(inoptr ino, uint8_t flag);
-extern uint16_t getmode(inoptr ino);
+extern uint8_t getmode(inoptr ino);
 extern struct mount *fs_tab_get(uint16_t dev);
 /* returns true on failure, false on success */
 extern bool fmount(uint16_t dev, inoptr ino, uint16_t flags);
@@ -749,7 +789,7 @@ extern void readi(inoptr ino, uint8_t flag);
 extern void writei(inoptr ino, uint8_t flag);
 extern int16_t doclose (uint8_t uindex);
 extern inoptr rwsetup (bool is_read, uint8_t *flag);
-extern int dev_openi(inoptr *ino, uint8_t flag);
+extern int dev_openi(inoptr *ino, uint16_t flag);
 extern void sync(void);
 
 /* mm.c */
@@ -763,13 +803,13 @@ extern void pwake(ptptr p);
 extern ptptr getproc(void);
 extern void newproc(ptptr p);
 extern ptptr ptab_alloc(void);
-extern void ssig(ptptr proc, uint16_t sig);
+extern void ssig(ptptr proc, uint8_t sig);
 extern void chksigs(void);
 extern void program_vectors(uint16_t *pageptr);
-extern void sgrpsig(uint16_t pgrp, uint16_t sig);
+extern void sgrpsig(uint16_t pgrp, uint8_t sig);
 extern void unix_syscall(void);
 extern void timer_interrupt(void);
-extern void doexit (int16_t val, int16_t val2);
+extern void doexit (uint16_t val);
 extern void panic(char *deathcry);
 extern void exec_or_die(void);
 #define need_resched() (nready != 1 && runticks >= udata.u_ptab->p_priority)
@@ -779,15 +819,15 @@ extern void exec_or_die(void);
 extern void seladdwait(struct selmap *s);
 extern void selrmwait(struct selmap *s);
 extern void selwake(struct selmap *s);
-#ifdef CONFIG_SELECT
-extern int selwait_inode(inoptr i, uint8_t smask, uint8_t setit);
+#ifdef CONFIG_LEVEL_2
+extern void selwait_inode(inoptr i, uint8_t smask, uint8_t setit);
 extern void selwake_inode(inoptr i, uint16_t mask);
 extern void selwake_pipe(inoptr i, uint16_t mask);
 extern int _select(void);
 #else
 #define selwait_inode(i,smask,setit) do {} while(0)
-#define selwake_inode(i,smask,setit) do {} while(0)
-#define selwake_pipe(i,smask,setit) do {} while(0)
+#define selwake_inode(i,smask) do {} while(0)
+#define selwake_pipe(i,smask) do {} while(0)
 #endif
 
 /* swap.c */
@@ -830,11 +870,12 @@ extern void pagemap_add(uint8_t page);	/* FIXME: may need a page type for big bo
 extern void pagemap_free(ptptr p);
 extern int pagemap_alloc(ptptr p);
 extern int pagemap_realloc(usize_t p);
-extern uaddr_t pagemap_mem_used(void);
+extern usize_t pagemap_mem_used(void);
 extern void map_init(void);
 extern void platform_idle(void);
 extern uint8_t rtc_secs(void);
 extern void trap_reboot(void);
+extern uint8_t platform_param(unsigned char *p);
 
 /* Will need a uptr_t eventually */
 extern uaddr_t ramtop;	     /* Note: ramtop must be in common in some cases */

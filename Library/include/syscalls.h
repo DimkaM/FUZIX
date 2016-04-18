@@ -10,24 +10,10 @@
 #endif
 #include <sys/stat.h>
 
+#include <sys/userstructs.h>
+
 extern int errno;
 extern int syscall(int callno, ...);
-
-struct  _uzistat
-{
-	int16_t    st_dev;
-	uint16_t   st_ino;
-	uint16_t   st_mode;
-	uint16_t   st_nlink;
-	uint16_t   st_uid;
-	uint16_t   st_gid;
-	uint16_t   st_rdev;
-	uint32_t   st_size;
-	uint32_t   st_atime;
-	uint32_t   st_mtime;
-	uint32_t   st_ctime;
-	uint32_t   st_timeh;	/* Time high bytes */
-};
 
 struct _uzisysinfoblk {
   uint8_t infosize;		/* For expandability */
@@ -64,12 +50,21 @@ struct _uzifilesys {
     uint16_t	  s_mntpt;
 };
 
+struct _sockio {
+        uint16_t sio_flags;
+        uint16_t sio_addr_len;
+        uint8_t sio_addr[0];
+};
+
 struct hd_geometry {
 	uint8_t heads;
 	uint8_t sectors;
 	uint16_t cylinders;
 	uint32_t start;
 };
+
+struct sockaddr;
+
 #define HDIO_GETGEO		0x0101
 #define HDIO_GET_IDENTITY	0x0102	/* Not yet implemented anywhere */
 
@@ -85,6 +80,11 @@ struct hd_geometry {
                                           Hook to the syscall trace debug */
 
 #define AD_NOSYNC		1	/* Unimplemented */
+
+/* shutdown */
+#define SHUT_RD			0
+#define SHUT_WR			1
+#define SHUT_RDWR		2
 
 struct times;
 struct tms;
@@ -143,6 +143,19 @@ extern int rename(const char *path, const char *newpath);
 extern int flock(int fd, int op);
 extern pid_t getpgrp(void);
 extern int sched_yield(void);
+extern int acct(const char *filename);
+extern int setgroups(size_t size, const gid_t *groups);
+extern int getgroups(int size, gid_t *groups);
+extern int getrlimit(int resource, struct rlimit *rlim);
+extern int setrlimit(int resource, const struct rlimit *rlim);
+extern int setpgid(pid_t pid, pid_t pgrp);
+extern pid_t setsid(void);
+extern pid_t getsid(pid_t pid);
+extern int socket(int af, int type, int pf);
+extern int listen(int fd, int len);
+extern int bind(int fd, const struct sockaddr *s, int len);
+extern int connect(int fd, const struct sockaddr *s, int len);
+extern int shutdown(int fd, int how);
 
 /* asm syscall hooks with C wrappers */
 extern int _getdirent(int fd, void *buf, int len);
@@ -156,6 +169,11 @@ extern int _utime(const char *file, __ktime_t *buf);
 extern int _uname(struct _uzisysinfoblk *uzib, int len);
 extern int _profil(void *samples, uint16_t offset, uint16_t size, int16_t scale);
 extern int _lseek(int fd, off_t *offset, int mode);
+extern int _select(int nfd, uint16_t *base);
+extern int _accept(int fd);
+extern int _getsockaddrs(int fd, int type, struct sockaddr_in *addr);
+extern int _sendto(int fd, const char *buf, size_t len, struct _sockio *uaddr);
+extern int _recvfrom(int fd, char *buf, size_t len, struct _sockio *uaddr);
 
 /* C library provided syscall emulation */
 extern int stat(const char *path, struct stat *s);

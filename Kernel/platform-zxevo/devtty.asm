@@ -1,7 +1,7 @@
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.5.4 #9358 (Linux)
-; This file was generated Mon Apr 18 13:07:25 2016
+; This file was generated Mon Apr 18 17:11:33 2016
 ;--------------------------------------------------------
 	.module devtty
 	.optsdcc -mz80
@@ -172,13 +172,13 @@ _tty_carrier::
 ; ---------------------------------
 _tty_setup::
 ;devtty.c:66: ttydata[1].termios.c_cc[VERASE] = 127;
-	ld	hl,#_ttydata + 38
+	ld	hl,#_ttydata + 46
 	ld	(hl),#0x7F
 ;devtty.c:67: ttydata[1].termios.c_cc[VSTOP] = KEY_STOP;
-	ld	hl,#_ttydata + 43
+	ld	hl,#_ttydata + 51
 	ld	(hl),#0x03
 ;devtty.c:68: ttydata[1].termios.c_cc[VSTART] = KEY_STOP;
-	ld	hl,#_ttydata + 42
+	ld	hl,#_ttydata + 50
 	ld	(hl),#0x03
 	ret
 ;devtty.c:106: unsigned char get_scan(void) __naked

@@ -1,7 +1,7 @@
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.5.4 #9358 (Linux)
-; This file was generated Mon Apr 18 13:33:50 2016
+; This file was generated Mon Apr 18 17:11:17 2016
 ;--------------------------------------------------------
 	.module mbr
 	.optsdcc -mz80
@@ -64,14 +64,14 @@ _mbr_parse::
 	ld	-29 (ix),#0x00
 ;../dev/mbr.c:32: kprintf("hd%c: ", letter);
 	ld	a,4 (ix)
-	ld	-2 (ix),a
+	ld	-9 (ix),a
 	ld	a,4 (ix)
 	rla
 	sbc	a, a
-	ld	-1 (ix),a
+	ld	-8 (ix),a
 	ld	hl,#___str_0
-	ld	c,-2 (ix)
-	ld	b,-1 (ix)
+	ld	c,-9 (ix)
+	ld	b,-8 (ix)
 	push	bc
 	push	hl
 	call	_kprintf
@@ -102,10 +102,10 @@ _mbr_parse::
 	ld	-3 (ix),a
 	ld	a,-18 (ix)
 	add	a, #0xBE
-	ld	-8 (ix),a
+	ld	-6 (ix),a
 	ld	a,-17 (ix)
 	adc	a, #0x01
-	ld	-7 (ix),a
+	ld	-5 (ix),a
 	ld	-20 (ix),#0x00
 00117$:
 ;../dev/mbr.c:43: blk_op.nblock = 1;
@@ -172,13 +172,13 @@ _mbr_parse::
 	ld	((_blk_op + 0x0006)+2), hl
 ;../dev/mbr.c:61: for(i=0; i<MBR_ENTRY_COUNT && next < MAX_PARTITIONS; i++){
 	ld	a,-29 (ix)
-	ld	-15 (ix),a
+	ld	-14 (ix),a
 	ld	-19 (ix),#0x00
 00125$:
 	ld	a,-19 (ix)
 	sub	a, #0x04
 	jp	NC,00143$
-	ld	a,-15 (ix)
+	ld	a,-14 (ix)
 	sub	a, #0x0F
 	jp	NC,00143$
 ;../dev/mbr.c:62: switch(br->partition[i].type){
@@ -188,19 +188,19 @@ _mbr_parse::
 	rlca
 	rlca
 	and	a,#0xF0
-	ld	-16 (ix),a
-	ld	a,-8 (ix)
-	add	a, -16 (ix)
-	ld	-6 (ix),a
-	ld	a,-7 (ix)
-	adc	a, #0x00
-	ld	-5 (ix),a
+	ld	-7 (ix),a
 	ld	a,-6 (ix)
-	ld	-10 (ix),a
+	add	a, -7 (ix)
+	ld	-16 (ix),a
 	ld	a,-5 (ix)
-	ld	-9 (ix),a
-	ld	l,-10 (ix)
-	ld	h,-9 (ix)
+	adc	a, #0x00
+	ld	-15 (ix),a
+	ld	a,-16 (ix)
+	ld	-2 (ix),a
+	ld	a,-15 (ix)
+	ld	-1 (ix),a
+	ld	l,-2 (ix)
+	ld	h,-1 (ix)
 	ld	de, #0x0004
 	add	hl, de
 	ld	l,(hl)
@@ -208,19 +208,19 @@ _mbr_parse::
 	or	a, a
 	jp	Z,00126$
 ;../dev/mbr.c:71: blk_op.lba = ep_offset + le32_to_cpu(br->partition[i].lba_first);
-	ld	a,-6 (ix)
+	ld	a,-16 (ix)
 	add	a, #0x08
-	ld	-10 (ix),a
-	ld	a,-5 (ix)
+	ld	-2 (ix),a
+	ld	a,-15 (ix)
 	adc	a, #0x00
-	ld	-9 (ix),a
+	ld	-1 (ix),a
 ;../dev/mbr.c:76: br->partition[i].lba_count = cpu_to_le32(2L);
-	ld	a,-6 (ix)
+	ld	a,-16 (ix)
 	add	a, #0x0C
-	ld	-6 (ix),a
-	ld	a,-5 (ix)
+	ld	-16 (ix),a
+	ld	a,-15 (ix)
 	adc	a, #0x00
-	ld	-5 (ix),a
+	ld	-15 (ix),a
 ;../dev/mbr.c:62: switch(br->partition[i].type){
 	ld	a,l
 	cp	a,#0x05
@@ -232,8 +232,8 @@ _mbr_parse::
 ;../dev/mbr.c:67: case 0x85:
 00111$:
 ;../dev/mbr.c:71: blk_op.lba = ep_offset + le32_to_cpu(br->partition[i].lba_first);
-	ld	l,-10 (ix)
-	ld	h,-9 (ix)
+	ld	l,-2 (ix)
+	ld	h,-1 (ix)
 	ld	d,(hl)
 	inc	hl
 	ld	b,(hl)
@@ -256,12 +256,12 @@ _mbr_parse::
 	ld	((_blk_op + 0x0006)), bc
 	ld	((_blk_op + 0x0006)+2), de
 ;../dev/mbr.c:72: if(next >= 4)
-	ld	a,-15 (ix)
+	ld	a,-14 (ix)
 	sub	a, #0x04
 	jp	NC,00126$
 ;../dev/mbr.c:76: br->partition[i].lba_count = cpu_to_le32(2L);
-	ld	l,-6 (ix)
-	ld	h,-5 (ix)
+	ld	l,-16 (ix)
+	ld	h,-15 (ix)
 	ld	(hl),#0x02
 	inc	hl
 	xor	a, a
@@ -276,7 +276,7 @@ _mbr_parse::
 	ld	de, (#(_blk_op + 0x0004) + 0)
 	ld	iy,#0x0009
 	add	iy, de
-	ld	a,-15 (ix)
+	ld	a,-14 (ix)
 	add	a, a
 	add	a, a
 	ld	e,a
@@ -284,8 +284,8 @@ _mbr_parse::
 	ld	d,#0x00
 	add	iy, de
 	pop	de
-	ld	l,-10 (ix)
-	ld	h,-9 (ix)
+	ld	l,-2 (ix)
+	ld	h,-1 (ix)
 	ld	c,(hl)
 	inc	hl
 	ld	b,(hl)
@@ -322,27 +322,27 @@ _mbr_parse::
 	adc	a, h
 	ld	d,a
 	push	de
-	ld	e,-6 (ix)
-	ld	d,-5 (ix)
-	ld	hl, #0x0011
+	ld	e,-16 (ix)
+	ld	d,-15 (ix)
+	ld	hl, #0x0012
 	add	hl, sp
 	ex	de, hl
 	ld	bc, #0x0004
 	ldir
 	pop	de
-	ld	hl, #0x000F
+	ld	hl, #0x0010
 	add	hl, sp
 	ld	bc, #0x0004
 	ldir
 ;../dev/mbr.c:83: next++;
-	inc	-15 (ix)
+	inc	-14 (ix)
 ;../dev/mbr.c:84: kprintf("hd%c%d ", letter, next);
-	ld	l,-15 (ix)
+	ld	l,-14 (ix)
 	ld	h,#0x00
 	ld	de,#___str_2
 	push	hl
-	ld	l,-2 (ix)
-	ld	h,-1 (ix)
+	ld	l,-9 (ix)
+	ld	h,-8 (ix)
 	push	hl
 	push	de
 	call	_kprintf
@@ -355,7 +355,7 @@ _mbr_parse::
 	inc	-19 (ix)
 	jp	00125$
 00143$:
-	ld	a,-15 (ix)
+	ld	a,-14 (ix)
 	ld	-29 (ix),a
 ;../dev/mbr.c:87: seen++;
 	inc	-20 (ix)

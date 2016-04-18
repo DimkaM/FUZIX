@@ -122,8 +122,8 @@ _irqrestore:			; B holds the data
 	.area .data
 _hz:	.db	0  		; Is machine in 50hz?
 
-	
-            .area .text
+
+            .area .discard
 
 ;;;  Stuff to initialize *before* hardware
 ;;;    takes: nothing
@@ -343,7 +343,7 @@ outchar:
 
 	.area	.data
 scrPos	.dw	0xb400		; debugging screen buffer position
-
+	.area	.text
 
 
 ;;; Maps the memory for swap transfers

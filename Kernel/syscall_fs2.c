@@ -10,7 +10,7 @@
 
 static arg_t chdiroot_op(inoptr ino, inoptr * p)
 {
-	if (getmode(ino) != F_DIR) {
+	if (getmode(ino) != MODE_R(F_DIR)) {
 		udata.u_error = ENOTDIR;
 		i_deref(ino);
 		return (-1);
@@ -244,7 +244,8 @@ arg_t _fchmod(void)
 
 static int chown_op(inoptr ino)
 {
-	if (ino->c_node.i_uid != udata.u_euid && esuper())
+	if ((ino->c_node.i_uid != udata.u_euid ||
+	        (group != udata.u_gid &&  !in_group(group))) && esuper())
 		return (-1);
 	if (ino->c_flags & CRDONLY) {
 		udata.u_error = EROFS;
@@ -371,7 +372,7 @@ arg_t _acct(void)
         if (fd != -1) {
                 if ((inode = getinode(fd)) == NULLINODE)
                         return -1;
-                if (getmode(inode) != F_REG) {
+                if (getmode(inode) != MODE_R(F_REG)) {
                         udata.u_error = EINVAL;
                         return -1;
                 }

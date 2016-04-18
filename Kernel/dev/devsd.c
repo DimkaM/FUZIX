@@ -24,7 +24,7 @@
  * the current operation's drive number */
 uint8_t sd_drive;
 
-uint8_t devsd_transfer_sector1(void)
+uint8_t devsd_transfer_sector(void)
 {
     uint8_t attempt;
     bool success;
@@ -38,10 +38,8 @@ uint8_t devsd_transfer_sector1(void)
                     ) == 0){
 	    if(blk_op.is_read){
                 success = (sd_spi_wait(false) == 0xFE);
-                if(success){
+                if(success)
                     sd_spi_receive_sector();
-					//sd_spi_wait(false);
-				}
             }else{
                 success = false;
                 if(sd_spi_wait(true) == 0xFF){
@@ -117,7 +115,7 @@ int sd_send_command(unsigned char cmd, uint32_t arg)
 
     /* Send command packet */
     sd_spi_transmit_byte(cmd);                        /* Start + Command index */
-#if 0
+#if !defined(__SDCC) && !defined(SDCC)
     sd_spi_transmit_byte((unsigned char)(arg >> 24)); /* Argument[31..24] */
     sd_spi_transmit_byte((unsigned char)(arg >> 16)); /* Argument[23..16] */
     sd_spi_transmit_byte((unsigned char)(arg >> 8));  /* Argument[15..8] */

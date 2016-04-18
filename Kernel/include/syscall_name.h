@@ -1,4 +1,4 @@
-#define NR_SYSCALL 66
+#define NR_SYSCALL 99
 
 #define VARARGS 	-1
 
@@ -69,6 +69,39 @@ char *syscall_name[NR_SYSCALL] = {
 	"acct",
 	"memalloc",
 	"memfree",
+	"_nosys66",
+	"_nosys67",
+	"_nosys68",
+	"_nosys69",
+	"_nosys70",
+	"_nosys71",
+	"_select",
+	"setgroups",
+	"getgroups",
+	"getrlimit",
+	"setrlimit",
+	"setpgid",
+	"setsid",
+	"getsid",
+	"_nosys80",
+	"_nosys81",
+	"_nosys82",
+	"_nosys83",
+	"_nosys84",
+	"_nosys85",
+	"_nosys86",
+	"_nosys87",
+	"_nosys88",
+	"_nosys89",
+	"socket",
+	"listen",
+	"bind",
+	"connect",
+	"_accept",
+	"_getsockaddrs",
+	"_sendto",
+	"_recvfrom",
+	"_shutdown",
 };
 
 int syscall_args[NR_SYSCALL] = {
@@ -138,4 +171,37 @@ int syscall_args[NR_SYSCALL] = {
 	1, //act
 	1, //memalloc
 	1, //memfree
+	0, //nosys 66
+	0, //nosys 67
+	0, //nosys 68
+	0, //nosys 69
+	0, //nosys 70
+	0, //nosys 71
+	2, //_select
+	2, //setgroups
+	2, //getgroups
+	2, //getrlimit
+	2, //setrlimit
+	2, //setpgid
+	1, //setsid
+	1, //getsid
+	0, //nosys80
+	0, //nosys81
+	0, //nosys82
+	0, //nosys83
+	0, //nosys84
+	0, //nosys85
+	0, //nosys86
+	0, //nosys87
+	0, //nosys88
+	0, //nosys89
+	3, //socket
+	2, //listen
+	3, //bind
+	3, //connect
+	1, //accept
+	3, //getsockaddrs
+	4, //sendto
+	4, //recvfrom
+	2, //shutdown
 };

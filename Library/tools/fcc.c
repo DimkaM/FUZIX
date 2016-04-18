@@ -236,6 +236,18 @@ static char *rebuildname(const char *r, const char *i, char *ext)
   return p;
 }
 
+char *filebasename(char *path)
+{
+  /* The POSIX one can mangle the input - so given its trivial do it
+     sanely ourselves */
+  char *p = strrchr(path, '/');
+  if (p == NULL)
+    return path;
+  /* We don't care about trailing slashes, we only work on files */
+  return p + 1;
+}
+  
+
 static char *chopname(const char *i)
 {
   char *p = mstrdup(i);
@@ -244,9 +256,12 @@ static char *chopname(const char *i)
     fprintf(stderr, "Out of memory.\n");
     exit(1);
   }
-  t = strrchr(p, '.');
-  if (t)
-    *t = 0;
+  t = strrchr(p, '/');
+  if (t) {
+    t = strrchr(t + 1, '.');
+    if (t)
+      *t = 0;
+  }
   return p;
 }
 
@@ -378,6 +393,7 @@ static void build_command(void)
   if (opt == NULL || optcode < 3)
     add_argument("--opt-code-size");
   /* Macros */
+  add_argument("-D__FUZIX__");
   /* Suppress the warnings when sharing code across architectures */
   add_argument("-Ddouble=float");
   /* User provided macros */
@@ -396,6 +412,10 @@ static void build_command(void)
       exit(1);
     }
     add_argument("-c");
+    if (srchead->next && target) {
+      fprintf(stderr, "Cannot use -c together with -o with multiple input files.\n");
+      exit(1);
+    }
   }
   if (mode == MODE_LINK) {
     if (target == NULL)
@@ -532,6 +552,14 @@ int main(int argc, const char *argv[]) {
       ret = do_command();
       if (ret)
         break;
+      if (mode == MODE_OBJ && target) {
+        char *orel = filebasename(rebuildname("", srchead->p, "rel"));
+        if (rename(orel, target) == -1) {
+          fprintf(stderr, "Unable to rename %s to %s.\n", orel, target);
+          perror(srchead->p);
+          exit(1);
+        }
+      }
       srchead = srchead->next;
       argp = 0;
     }
@@ -557,7 +585,7 @@ int main(int argc, const char *argv[]) {
   add_argument(buf);
   add_argument(t);
   add_argument(rebuildname("", target, "map"));
-  add_argument(chopname(target));
+  add_argument(target);
   ret = do_command();
   exit(ret);
 }

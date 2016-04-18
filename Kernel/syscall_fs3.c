@@ -82,11 +82,13 @@ arg_t _open(void)
 		goto cantopen;
 	}
 	if (w) {
-		if (getmode(ino) == F_DIR ) {
+		if (getmode(ino) == MODE_R(F_DIR)) {
 			udata.u_error = EISDIR;
 			goto cantopen;
 		}
-		if (ino->c_flags & CRDONLY) {
+		/* Special case - devices on a read only file system may
+		   be opened read/write */
+		if (!isdevice(ino) && (ino->c_flags & CRDONLY)) {
 			udata.u_error = EROFS;
 			goto cantopen;
 		}
@@ -107,7 +109,7 @@ arg_t _open(void)
 		ino = *iptr;
 	}
 
-	if (trunc && getmode(ino) == F_REG) {
+	if (trunc && getmode(ino) == MODE_R(F_REG)) {
 		if (f_trunc(ino))
 			goto idrop;
 		for (j = 0; j < OFTSIZE; ++j)
@@ -127,7 +129,7 @@ arg_t _open(void)
 /*
  *         Sleep process if no writer or reader
  */
-	if (getmode(ino) == F_PIPE && of_tab[oftindex].o_refs == 1
+	if (getmode(ino) == MODE_R(F_PIPE) && of_tab[oftindex].o_refs == 1
 	    && !(flag & O_NDELAY))
 		psleep(ino);
 
@@ -167,7 +169,7 @@ arg_t _link(void)
 	if (!(ino = n_open(name1, NULLINOPTR)))
 		return (-1);
 
-	if (getmode(ino) == F_DIR && esuper())
+	if (getmode(ino) == MODE_R(F_DIR) && esuper())
 		goto nogood;
 
 	if (ino->c_node.i_nlink == 0xFFFF) {

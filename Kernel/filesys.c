@@ -15,7 +15,7 @@ inoptr n_open(char *uname, inoptr *parent)
     inoptr r;
     char *tb;
 
-    tb = (char*)tmpbuf(); /* temporary memory to hold kernel's copy of the filename */
+    tb = (char*)pathbuf(); /* temporary memory to hold kernel's copy of the filename */
 
     if (ugets(uname, tb, 512) == -1) {
         udata.u_error = EFAULT;
@@ -29,7 +29,7 @@ inoptr n_open(char *uname, inoptr *parent)
 
     r = kn_open(tb, parent);
 
-    brelse(tb);
+    pathfree(tb);
 
     return r;
 }
@@ -77,7 +77,7 @@ inoptr kn_open(char *namep, inoptr *parent)
         }
         i_deref(wd);
         wd = ninode;
-        if(getmode(wd) != F_DIR){
+        if(getmode(wd) != MODE_R(F_DIR)){
             udata.u_error = ENOTDIR;
             goto nodir;
         }
@@ -272,6 +272,8 @@ bool ch_link(inoptr wd, char *oldname, char *newname, inoptr nindex)
         udata.u_error = EROFS;
         return false;
     }
+    /* FIXME: for modern style permissions we should also check whether
+       wd has the sticky bit set and if so require ownership or root */
     if(!(getperm(wd) & OTH_WR))
     {
         udata.u_error = EACCES;
@@ -299,8 +301,10 @@ bool ch_link(inoptr wd, char *oldname, char *newname, inoptr nindex)
             break;
     }
 
-    if(udata.u_count == 0 && *oldname)
+    if(udata.u_count == 0 && *oldname) {
+        udata.u_error = ENOENT;
         return false;                  /* Entry not found */
+    }
 
     memcpy(curentry.d_name, newname, FILENAME_LEN);
     // pad name with NULLs
@@ -355,10 +359,17 @@ void filename(char *userspace_upath, char *name)
         return;          /* An access violation reading the name */
     }
     ptr = buf;
+    /* Find the end of the buffer */
     while(*ptr)
         ++ptr;
-    /* Special case for "...name.../" */
+    /* Special case for "...name.../". SuS requires that mkdir foo/ works
+       (see the clarifications to the standard) */
+    if (*--ptr == '/')
+        *ptr-- = 0;
+    /* Walk back until we drop off the start of the buffer or find the
+       slash */
     while(*ptr != '/' && ptr-- > buf);
+    /* And move past the slash, or not the string start */
     ptr++;
     memcpy(name, ptr, FILENAME_LEN);
     brelse(buf);
@@ -412,7 +423,7 @@ inoptr newfile(inoptr pino, char *name)
     if(!(nindex = i_open(pino->c_dev, 0)))
         goto nogood;
 
-    /* BUG FIX:  user/group setting was missing  SN */
+    /* This does not implement BSD style "sticky" groups */
     nindex->c_node.i_uid = udata.u_euid;
     nindex->c_node.i_gid = udata.u_egid;
 
@@ -480,7 +491,6 @@ uint16_t i_alloc(uint16_t devno)
 {
     staticfast fsptr dev;
     staticfast blkno_t blk;
-    staticfast struct mount *m;
     struct dinode *buf;
     staticfast uint16_t j;
     uint16_t k;
@@ -488,7 +498,6 @@ uint16_t i_alloc(uint16_t devno)
 
     if(baddev(dev = getdev(devno)))
         goto corrupt;
-    m = fs_tab_get(devno);
 
 tryagain:
     if(dev->s_ninode) {
@@ -868,7 +877,7 @@ blkno_t bmap(inoptr ip, blkno_t bn, int rwflg)
     int sh;
     uint16_t dev;
 
-    if(getmode(ip) == F_BDEV)
+    if(getmode(ip) == MODE_R(F_BDEV))
         return(bn);
 
     dev = ip->c_dev;
@@ -1015,6 +1024,11 @@ uint8_t getperm(inoptr ino)
         mode >>= 6;
     else if(ino->c_node.i_gid == udata.u_egid)
         mode >>= 3;
+#ifdef CONFIG_LEVEL_2
+    /* BSD process groups */
+    else if (in_group(ino->c_node.i_gid))
+        mode >>= 3;
+#endif
 
     return(mode & 07);
 }
@@ -1038,9 +1052,11 @@ void setftime(inoptr ino, uint8_t flag)
 }
 
 
-uint16_t getmode(inoptr ino)
+uint8_t getmode(inoptr ino)
 {
-    return(ino->c_node.i_mode & F_MASK);
+    /* Shifting by 9 (past permissions might be more logical but
+       8 happens to be cheap */
+    return (ino->c_node.i_mode & F_MASK) >> 8;
 }
 
 
@@ -1123,7 +1139,7 @@ void magic(inoptr ino)
  * syscall banks. */
 arg_t unlinki(inoptr ino, inoptr pino, char *fname)
 {
-	if (getmode(ino) == F_DIR) {
+	if (getmode(ino) == MODE_R(F_DIR)) {
 		udata.u_error = EISDIR;
 		return -1;
 	}
