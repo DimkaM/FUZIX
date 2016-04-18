@@ -31,7 +31,7 @@ bool PROC
 doyank(int low, int high)
 {
     HANDLE f;
-    register sz;
+    int sz;
     
     yank.size = high - low;
     moveleft(&core[low], yank.stuff, min(yank.size, SBUFSIZE));
