@@ -115,7 +115,6 @@ _program_vectors:
 	    call map_process
 
             ; write zeroes across all vectors
-	    ; on MSX this is probably the wrong thing to do!!! FIXME
             ld hl, #0
             ld de, #1
             ld bc, #0x007f ; program first 0x80 bytes only

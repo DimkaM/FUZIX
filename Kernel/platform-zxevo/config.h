@@ -45,7 +45,7 @@
 
 #define DEVICE_SD
 #define SD_DRIVE_COUNT 1
-#define BOOTDEVICE 0x0020
+#define BOOTDEVICE 0x0002
 
 #define MAX_BLKDEV 2      /* Single SD drive */
 #define CONFIG_RTC

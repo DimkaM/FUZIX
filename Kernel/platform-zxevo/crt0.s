@@ -46,7 +46,7 @@
 	        ; startup code @0x100
 	        .area _CODE
 
-		.include "zxevo.def"
+		;.include "zxevo.def"
 
 ;
 ; Execution begins with us correctly mapped and at 0x0x100

@@ -1,7 +1,7 @@
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.5.4 #9358 (Linux)
-; This file was generated Sun Apr 17 23:22:42 2016
+; This file was generated Mon Apr 18 13:07:25 2016
 ;--------------------------------------------------------
 	.module discard
 	.optsdcc -mz80
@@ -53,12 +53,12 @@ _RTC_DATA	=	0xbef7
 ; code
 ;--------------------------------------------------------
 	.area _DISCARD
-;discard.c:10: void ps2_activator(void) __naked
+;discard.c:8: void ps2_activator(void) __naked
 ;	---------------------------------
 ; Function ps2_activator
 ; ---------------------------------
 _ps2_activator::
-;discard.c:28: __endasm;
+;discard.c:26: __endasm;
 	ld bc,#0xdef7
 	ld a,#0xf0
 	out (c),a
@@ -74,49 +74,49 @@ _ps2_activator::
 	or a
 	ret z
 	jr actloop
-;discard.c:59: void uart_activator(void)
+;discard.c:57: void uart_activator(void)
 ;	---------------------------------
 ; Function uart_activator
 ; ---------------------------------
 _uart_activator::
-;discard.c:61: UART_LCR=0x80;
+;discard.c:59: UART_LCR=0x80;
 	ld	a,#0x80
 	ld	bc,#_UART_LCR
 	out	(c),a
-;discard.c:62: UART_DLM=0;
+;discard.c:60: UART_DLM=0;
 	ld	a,#0x00
 	ld	bc,#_UART_DLM
 	out	(c),a
-;discard.c:63: UART_DLL=1;
+;discard.c:61: UART_DLL=1;
 	ld	a,#0x01
 	ld	bc,#_UART_DLL
 	out	(c),a
-;discard.c:64: UART_LCR=3;
+;discard.c:62: UART_LCR=3;
 	ld	a,#0x03
 	ld	bc,#_UART_LCR
 	out	(c),a
-;discard.c:65: UART_FCR=7;
+;discard.c:63: UART_FCR=7;
 	ld	a,#0x07
 	ld	bc,#_UART_FCR
 	out	(c),a
 	ret
-;discard.c:67: void device_init(void)
+;discard.c:65: void device_init(void)
 ;	---------------------------------
 ; Function device_init
 ; ---------------------------------
 _device_init::
-;discard.c:69: ps2_activator();
+;discard.c:67: ps2_activator();
 	call	_ps2_activator
-;discard.c:70: uart_activator();
+;discard.c:68: uart_activator();
 	call	_uart_activator
-;discard.c:72: devsd_init();
+;discard.c:70: devsd_init();
 	jp  _devsd_init
-;discard.c:76: void map_init(void)
+;discard.c:74: void map_init(void)
 ;	---------------------------------
 ; Function map_init
 ; ---------------------------------
 _map_init::
-;discard.c:78: }
+;discard.c:76: }
 	ret
 	.area _CODE
 	.area _DISCARD

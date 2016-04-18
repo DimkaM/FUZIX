@@ -1,16 +1,12 @@
 #include <kernel.h>
 #include <version.h>
 #include <kdata.h>
-#include <devhd.h>
-#include <devfd.h>
-#include <devlpr.h>
 #include <devsys.h>
 #include <tty.h>
 #include <vt.h>
-#include <devtty.h>
+#include "devtty.h"
 #include <devsd.h>
 #include <blkdev.h>
-#include "msx2.h"
 #include <printf.h>
 
 struct devsw dev_tab[] =  /* The device driver switch table */

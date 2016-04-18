@@ -1,9 +1,9 @@
 
-CSRCS = ../dev/devsd.c ../dev/mbr.c ../dev/blkdev.c
-CSRCS += devfd.c devhd.c devlpr.c devsdspi.c 
+CSRCS = evosd.c ../dev/mbr.c ../dev/blkdev.c
+CSRCS += devsdspi.c 
 CSRCS += devices.c main.c devtty.c devrtc.c 
-DISCARD_CSRCS = discard.c
-DISCARD_DSRCS = ../dev/devsd_discard.c
+DISCARD_CSRCS = discard.c evosd_discard.c
+#DISCARD_DSRCS = evosd_discard.c
 ASRCS = zxevo.s crt0.s
 ASRCS += tricks.s commonmem.s
 
@@ -47,7 +47,7 @@ image:
 	sudo parted mbr mkpart primary fat16 1MiB 17MiB
 	sudo parted mbr mkpart primary 17MiB 33MiB
 	truncate --size=1M mbr
-	truncate --size=16776704 p1
+	truncate --size=16M p1
 	mkfs.fat p1
 	sudo mount p1 ./img
 	sudo cp ../fuzix.bin ./img/

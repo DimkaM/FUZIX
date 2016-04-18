@@ -1,11 +1,9 @@
 #include <kernel.h>
 #include <kdata.h>
 #include <devsd.h>
-#include <devide.h>
 #include <printf.h>
 #include <vt.h>
 #include <tty.h>
-#include "zxevo.h"
 #include "devtty.h"
 void ps2_activator(void) __naked
 {

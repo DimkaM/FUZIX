@@ -1,6 +1,5 @@
 TOP = .
 BUILD = $(TOP)/Build
-
 OBJ = .obj
 hide = @
 

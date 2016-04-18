@@ -5,7 +5,6 @@
 #include <devtty.h>
 #include <vt.h>
 #include <tty.h>
-#include "msx2.h"
 
 #undef  DEBUG			/* UNdefine to delete debug code sequences */
 

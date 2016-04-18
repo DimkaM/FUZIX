@@ -1,7 +1,7 @@
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.5.4 #9358 (Linux)
-; This file was generated Sun Apr 17 23:22:42 2016
+; This file was generated Mon Apr 18 13:07:25 2016
 ;--------------------------------------------------------
 	.module devtty
 	.optsdcc -mz80
@@ -89,12 +89,12 @@ _inv:
 ; code
 ;--------------------------------------------------------
 	.area _CODE2
-;devtty.c:34: void kputchar(char c)
+;devtty.c:33: void kputchar(char c)
 ;	---------------------------------
 ; Function kputchar
 ; ---------------------------------
 _kputchar::
-;devtty.c:37: if (c == '\n')
+;devtty.c:36: if (c == '\n')
 	ld	iy,#2
 	add	iy,sp
 	ld	h,0 (iy)
@@ -107,13 +107,13 @@ _kputchar::
 	jr	NZ,00102$
 	or	a,l
 	jr	NZ,00102$
-;devtty.c:38: tty_putc(1, '\r');
+;devtty.c:37: tty_putc(1, '\r');
 	ld	hl,#0x0D01
 	push	hl
 	call	_tty_putc
 	pop	af
 00102$:
-;devtty.c:39: tty_putc(1, c);
+;devtty.c:38: tty_putc(1, c);
 	ld	hl, #2+0
 	add	hl, sp
 	ld	d, (hl)
@@ -122,20 +122,20 @@ _kputchar::
 	call	_tty_putc
 	pop	af
 	ret
-;devtty.c:43: ttyready_t tty_writeready(uint8_t minor)
+;devtty.c:42: ttyready_t tty_writeready(uint8_t minor)
 ;	---------------------------------
 ; Function tty_writeready
 ; ---------------------------------
 _tty_writeready::
-;devtty.c:46: return TTY_READY_NOW;
+;devtty.c:45: return TTY_READY_NOW;
 	ld	l,#0x01
 	ret
-;devtty.c:49: void tty_putc(uint8_t minor, unsigned char c)
+;devtty.c:48: void tty_putc(uint8_t minor, unsigned char c)
 ;	---------------------------------
 ; Function tty_putc
 ; ---------------------------------
 _tty_putc::
-;devtty.c:52: if(minor==1) vtoutput(&c, 1);
+;devtty.c:51: if(minor==1) vtoutput(&c, 1);
 	ld	hl, #2+0
 	add	hl, sp
 	ld	a, (hl)
@@ -151,42 +151,42 @@ _tty_putc::
 	pop	af
 	ret
 00102$:
-;devtty.c:53: else UART_DAT = c;
+;devtty.c:52: else UART_DAT = c;
 	ld	hl, #3+0
 	add	hl, sp
 	ld	a, (hl)
 	ld	bc,#_UART_DAT
 	out	(c),a
 	ret
-;devtty.c:56: int tty_carrier(uint8_t minor)
+;devtty.c:55: int tty_carrier(uint8_t minor)
 ;	---------------------------------
 ; Function tty_carrier
 ; ---------------------------------
 _tty_carrier::
-;devtty.c:59: return 1;
+;devtty.c:58: return 1;
 	ld	hl,#0x0001
 	ret
-;devtty.c:62: void tty_setup(uint8_t minor)
+;devtty.c:61: void tty_setup(uint8_t minor)
 ;	---------------------------------
 ; Function tty_setup
 ; ---------------------------------
 _tty_setup::
-;devtty.c:67: ttydata[1].termios.c_cc[VERASE] = 127;
+;devtty.c:66: ttydata[1].termios.c_cc[VERASE] = 127;
 	ld	hl,#_ttydata + 38
 	ld	(hl),#0x7F
-;devtty.c:68: ttydata[1].termios.c_cc[VSTOP] = KEY_STOP;
+;devtty.c:67: ttydata[1].termios.c_cc[VSTOP] = KEY_STOP;
 	ld	hl,#_ttydata + 43
 	ld	(hl),#0x03
-;devtty.c:69: ttydata[1].termios.c_cc[VSTART] = KEY_STOP;
+;devtty.c:68: ttydata[1].termios.c_cc[VSTART] = KEY_STOP;
 	ld	hl,#_ttydata + 42
 	ld	(hl),#0x03
 	ret
-;devtty.c:107: unsigned char get_scan(void) __naked
+;devtty.c:106: unsigned char get_scan(void) __naked
 ;	---------------------------------
 ; Function get_scan
 ; ---------------------------------
 _get_scan::
-;devtty.c:126: __endasm;
+;devtty.c:125: __endasm;
 	ld bc,#0xdef7
 	ld a,#0xf0
 	out (c),a
@@ -203,7 +203,7 @@ _get_scan::
 	out (c),a
 	xor a
 	ret
-;devtty.c:128: unsigned char decode(unsigned char sc) {
+;devtty.c:127: unsigned char decode(unsigned char sc) {
 ;	---------------------------------
 ; Function decode
 ; ---------------------------------
@@ -211,7 +211,7 @@ _decode::
 	call	___sdcc_enter_ix
 	push	af
 	dec	sp
-;devtty.c:130: switch (sc) {
+;devtty.c:129: switch (sc) {
 	ld	a,4 (ix)
 	sub	a, #0x11
 	jr	NZ,00218$
@@ -257,11 +257,11 @@ _decode::
 	xor	a,a
 00227$:
 	ld	c,a
-;devtty.c:129: if (!(mode&KEY_MODE_UP)){
+;devtty.c:128: if (!(mode&KEY_MODE_UP)){
 	ld	hl,#_mode+0
 	bit	4, (hl)
 	jp	NZ,00134$
-;devtty.c:130: switch (sc) {
+;devtty.c:129: switch (sc) {
 	ld	a,-3 (ix)
 	or	a,a
 	jr	NZ,00104$
@@ -277,64 +277,64 @@ _decode::
 	ld	a,4 (ix)
 	sub	a, #0xF0
 	jr	NZ,00107$
-;devtty.c:132: mode|=KEY_MODE_UP;
+;devtty.c:131: mode|=KEY_MODE_UP;
 	ld	a,(#_mode + 0)
 	set	4, a
 	ld	(#_mode + 0),a
-;devtty.c:133: break;
+;devtty.c:132: break;
 	jp	00135$
-;devtty.c:135: case 0x59 :// Right SHIFT
+;devtty.c:134: case 0x59 :// Right SHIFT
 00103$:
-;devtty.c:136: mode|=KEY_MODE_SHIFT;
+;devtty.c:135: mode|=KEY_MODE_SHIFT;
 	ld	a,(#_mode + 0)
 	set	1, a
-;devtty.c:137: mode&=~KEY_MODE_E0;
+;devtty.c:136: mode&=~KEY_MODE_E0;
 	ld	(#_mode + 0),a
 	and	a, #0xDF
 	ld	(#_mode + 0),a
-;devtty.c:138: break;
+;devtty.c:137: break;
 	jp	00135$
-;devtty.c:139: case 0x11 :// Alt  
+;devtty.c:138: case 0x11 :// Alt  
 00104$:
-;devtty.c:140: mode=(mode|KEY_MODE_ALT)&(~KEY_MODE_E0);
+;devtty.c:139: mode=(mode|KEY_MODE_ALT)&(~KEY_MODE_E0);
 	ld	a,(#_mode + 0)
 	set	2, a
 	and	a, #0xDF
 	ld	(#_mode + 0),a
-;devtty.c:141: break;
+;devtty.c:140: break;
 	jp	00135$
-;devtty.c:142: case 0x14 :// Ctrl  
+;devtty.c:141: case 0x14 :// Ctrl  
 00105$:
-;devtty.c:143: mode=(mode|KEY_MODE_CTRL)&(~KEY_MODE_E0);
+;devtty.c:142: mode=(mode|KEY_MODE_CTRL)&(~KEY_MODE_E0);
 	ld	a,(#_mode + 0)
 	set	3, a
 	and	a, #0xDF
 	ld	(#_mode + 0),a
-;devtty.c:144: break;
+;devtty.c:143: break;
 	jp	00135$
-;devtty.c:148: default:
+;devtty.c:147: default:
 00107$:
-;devtty.c:153: sc=scodes[sc];
+;devtty.c:152: sc=scodes[sc];
 	ld	de,#_scodes+0
 	ld	l,4 (ix)
 	ld	h,#0x00
 	add	hl,de
 	ld	a,(hl)
-;devtty.c:154: if(!sc) return 0;
+;devtty.c:153: if(!sc) return 0;
 	ld	4 (ix), a
 	or	a,a
 	jr	NZ,00114$
 	ld	l,a
 	jp	00136$
 00114$:
-;devtty.c:155: else if (sc>65) return sc;
+;devtty.c:154: else if (sc>65) return sc;
 	ld	a,#0x41
 	sub	a, 4 (ix)
 	jr	NC,00111$
 	ld	l,4 (ix)
 	jp	00136$
 00111$:
-;devtty.c:156: else if (sc>47) return unmod[sc-48];
+;devtty.c:155: else if (sc>47) return unmod[sc-48];
 	ld	a,#0x2F
 	sub	a, 4 (ix)
 	jr	NC,00115$
@@ -347,22 +347,22 @@ _decode::
 	ld	l,(hl)
 	jp	00136$
 00115$:
-;devtty.c:158: switch(mode&(KEY_MODE_RUS|KEY_MODE_SHIFT)){
+;devtty.c:157: switch(mode&(KEY_MODE_RUS|KEY_MODE_SHIFT)){
 	ld	a,(#_mode + 0)
 	and	a, #0x03
 	ld	c,a
-;devtty.c:160: if(sc<27)return (sc+'a'-1);
+;devtty.c:159: if(sc<27)return (sc+'a'-1);
 	ld	a,4 (ix)
 	sub	a, #0x1B
 	ld	a,#0x00
 	rla
 	ld	e,a
 	ld	l,4 (ix)
-;devtty.c:162: return stand[sc-27];
+;devtty.c:161: return stand[sc-27];
 	ld	a,4 (ix)
 	add	a,#0xE5
 	ld	-2 (ix),a
-;devtty.c:158: switch(mode&(KEY_MODE_RUS|KEY_MODE_SHIFT)){
+;devtty.c:157: switch(mode&(KEY_MODE_RUS|KEY_MODE_SHIFT)){
 	ld	a,c
 	or	a, a
 	jr	Z,00116$
@@ -370,9 +370,9 @@ _decode::
 	sub	a, #0x02
 	jr	Z,00122$
 	jp	00135$
-;devtty.c:159: case KEY_MODE_NONE :
+;devtty.c:158: case KEY_MODE_NONE :
 00116$:
-;devtty.c:160: if(sc<27)return (sc+'a'-1);
+;devtty.c:159: if(sc<27)return (sc+'a'-1);
 	ld	a,e
 	or	a, a
 	jr	Z,00120$
@@ -380,7 +380,7 @@ _decode::
 	add	hl, bc
 	jp	00136$
 00120$:
-;devtty.c:161: else if (sc>37) return (sc+'0'-38);
+;devtty.c:160: else if (sc>37) return (sc+'0'-38);
 	ld	a,#0x25
 	sub	a, 4 (ix)
 	jr	NC,00121$
@@ -388,7 +388,7 @@ _decode::
 	add	hl, bc
 	jp	00136$
 00121$:
-;devtty.c:162: return stand[sc-27];
+;devtty.c:161: return stand[sc-27];
 	ld	a,#<(_stand)
 	add	a, -2 (ix)
 	ld	l,a
@@ -397,9 +397,9 @@ _decode::
 	ld	h,a
 	ld	l,(hl)
 	jr	00136$
-;devtty.c:163: case KEY_MODE_SHIFT :
+;devtty.c:162: case KEY_MODE_SHIFT :
 00122$:
-;devtty.c:164: if(sc<27)return (sc+'A'-1);
+;devtty.c:163: if(sc<27)return (sc+'A'-1);
 	ld	a,e
 	or	a, a
 	jr	Z,00124$
@@ -407,26 +407,26 @@ _decode::
 	add	hl, bc
 	jr	00136$
 00124$:
-;devtty.c:165: return stand_sh[sc-27];
+;devtty.c:164: return stand_sh[sc-27];
 	ld	hl,#_stand_sh+0
 	ld	e,-2 (ix)
 	ld	d,#0x00
 	add	hl,de
 	ld	l,(hl)
 	jr	00136$
-;devtty.c:167: }
+;devtty.c:166: }
 00134$:
-;devtty.c:137: mode&=~KEY_MODE_E0;
+;devtty.c:136: mode&=~KEY_MODE_E0;
 	ld	hl,#_mode + 0
 	ld	b, (hl)
-;devtty.c:170: switch (sc) {
+;devtty.c:169: switch (sc) {
 	ld	a,-3 (ix)
 	or	a, a
 	jr	NZ,00130$
-;devtty.c:172: mode&=~KEY_MODE_SHIFT;
+;devtty.c:171: mode&=~KEY_MODE_SHIFT;
 	ld	h,b
 	res	1, h
-;devtty.c:170: switch (sc) {
+;devtty.c:169: switch (sc) {
 	ld	a,d
 	or	a, a
 	jr	NZ,00127$
@@ -438,47 +438,47 @@ _decode::
 	or	a,c
 	jr	NZ,00128$
 	jr	00132$
-;devtty.c:171: case 0x12 :// Left SHIFT
+;devtty.c:170: case 0x12 :// Left SHIFT
 00127$:
-;devtty.c:172: mode&=~KEY_MODE_SHIFT;
+;devtty.c:171: mode&=~KEY_MODE_SHIFT;
 	ld	iy,#_mode
 	ld	0 (iy),h
-;devtty.c:173: break;
+;devtty.c:172: break;
 	jr	00132$
-;devtty.c:174: case 0xe0 :
+;devtty.c:173: case 0xe0 :
 00128$:
-;devtty.c:175: return 0;
+;devtty.c:174: return 0;
 	ld	l,#0x00
 	jr	00136$
-;devtty.c:176: case 0x59 :// Right SHIFT
+;devtty.c:175: case 0x59 :// Right SHIFT
 00129$:
-;devtty.c:177: mode&=~KEY_MODE_SHIFT;
+;devtty.c:176: mode&=~KEY_MODE_SHIFT;
 	ld	iy,#_mode
 	ld	0 (iy),h
-;devtty.c:178: break;
+;devtty.c:177: break;
 	jr	00132$
-;devtty.c:179: case 0x11 :// Alt 
+;devtty.c:178: case 0x11 :// Alt 
 00130$:
-;devtty.c:180: mode&=~KEY_MODE_ALT;
+;devtty.c:179: mode&=~KEY_MODE_ALT;
 	ld	a,b
 	and	a, #0xFB
 	ld	(#_mode + 0),a
-;devtty.c:181: break;
+;devtty.c:180: break;
 	jr	00132$
-;devtty.c:182: case 0x14 :// Ctrl 
+;devtty.c:181: case 0x14 :// Ctrl 
 00131$:
-;devtty.c:183: mode&=~KEY_MODE_CTRL;
+;devtty.c:182: mode&=~KEY_MODE_CTRL;
 	ld	a,b
 	and	a, #0xF7
 	ld	(#_mode + 0),a
-;devtty.c:185: }
+;devtty.c:184: }
 00132$:
-;devtty.c:186: mode&=~(KEY_MODE_UP|KEY_MODE_E0);// Two 0xF0 in a row not allowed
+;devtty.c:185: mode&=~(KEY_MODE_UP|KEY_MODE_E0);// Two 0xF0 in a row not allowed
 	ld	a,(#_mode + 0)
 	and	a, #0xCF
 	ld	(#_mode + 0),a
 00135$:
-;devtty.c:188: return 0;
+;devtty.c:187: return 0;
 	ld	l,#0x00
 00136$:
 	ld	sp, ix
@@ -632,18 +632,18 @@ _stand_sh:
 	.db 0x22
 	.ascii "<>~|?_+)!@#$%^&*("
 	.db 0x00
-;devtty.c:191: void kbd_interrupt(void)
+;devtty.c:190: void kbd_interrupt(void)
 ;	---------------------------------
 ; Function kbd_interrupt
 ; ---------------------------------
 _kbd_interrupt::
-;devtty.c:193: if(cur_key=get_scan()) 
+;devtty.c:192: if(cur_key=get_scan()) 
 	call	_get_scan
 	ld	a,l
 	ld	(#_cur_key + 0),a
 	or	a, a
 	jr	Z,00104$
-;devtty.c:194: if(cur_key=decode(cur_key)){		
+;devtty.c:193: if(cur_key=decode(cur_key)){		
 	ld	a,(_cur_key)
 	push	af
 	inc	sp
@@ -653,7 +653,7 @@ _kbd_interrupt::
 	ld	(#_cur_key + 0),a
 	or	a, a
 	jr	Z,00104$
-;devtty.c:195: vt_inproc(1,(mode&KEY_MODE_CTRL)?(cur_key&0x1f):cur_key);
+;devtty.c:194: vt_inproc(1,(mode&KEY_MODE_CTRL)?(cur_key&0x1f):cur_key);
 	ld	hl,#_mode+0
 	bit	3, (hl)
 	jr	Z,00109$
@@ -669,7 +669,7 @@ _kbd_interrupt::
 	call	_vt_inproc
 	pop	af
 00104$:
-;devtty.c:197: if (UART_LSR&1) vt_inproc(2,UART_DAT);
+;devtty.c:196: if (UART_LSR&1) vt_inproc(2,UART_DAT);
 	ld	a,#>(_UART_LSR)
 	in	a,(#<(_UART_LSR))
 	rrca
@@ -682,19 +682,19 @@ _kbd_interrupt::
 	call	_vt_inproc
 	pop	af
 	ret
-;devtty.c:201: void tty_sleeping(uint8_t minor)
+;devtty.c:200: void tty_sleeping(uint8_t minor)
 ;	---------------------------------
 ; Function tty_sleeping
 ; ---------------------------------
 _tty_sleeping::
-;devtty.c:203: minor;
+;devtty.c:202: minor;
 	ret
-;devtty.c:206: void vtattr_notify(void)
+;devtty.c:205: void vtattr_notify(void)
 ;	---------------------------------
 ; Function vtattr_notify
 ; ---------------------------------
 _vtattr_notify::
-;devtty.c:208: }
+;devtty.c:207: }
 	ret
 	.area _CODE
 	.area _CONST

@@ -1,7 +1,7 @@
 ;--------------------------------------------------------
 ; File Created by SDCC : free open source ANSI-C Compiler
 ; Version 3.5.4 #9358 (Linux)
-; This file was generated Sun Apr 17 23:22:36 2016
+; This file was generated Mon Apr 18 13:07:20 2016
 ;--------------------------------------------------------
 	.module devices
 	.optsdcc -mz80
@@ -44,12 +44,12 @@ _dev_tab::
 ; code
 ;--------------------------------------------------------
 	.area _CODE2
-;devices.c:33: bool validdev(uint16_t dev)
+;devices.c:29: bool validdev(uint16_t dev)
 ;	---------------------------------
 ; Function validdev
 ; ---------------------------------
 _validdev::
-;devices.c:37: if(dev > ((sizeof(dev_tab)/sizeof(struct devsw)) << 8) + 255)
+;devices.c:33: if(dev > ((sizeof(dev_tab)/sizeof(struct devsw)) << 8) + 255)
 	ld	a,#0xFF
 	ld	iy,#2
 	add	iy,sp
@@ -57,11 +57,11 @@ _validdev::
 	ld	a,#0x08
 	sbc	a, 1 (iy)
 	jr	NC,00102$
-;devices.c:38: return false;
+;devices.c:34: return false;
 	ld	l,#0x00
 	ret
 00102$:
-;devices.c:40: return true;
+;devices.c:36: return true;
 	ld	l,#0x01
 	ret
 	.area _CODE
