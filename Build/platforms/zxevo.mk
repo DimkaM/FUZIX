@@ -134,8 +134,6 @@ FILESYSTEM = \
     /usr/games/wump         0755 $(v7-games-wump.result) \
 	/bin/sh                 0755 $(v7-sh.result) \
 	/bin/levee              0755 $(levee.result) \
-
-# These don't work yet. \
     /bin/accton             0755 $(Applications/V7/cmd/accton.result) \
     /bin/look               0755 $(Applications/V7/cmd/look.result) \
 

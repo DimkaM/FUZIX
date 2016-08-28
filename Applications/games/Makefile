@@ -3,7 +3,7 @@ ASM = sdasz80
 AR = sdar
 LINKER = sdcc
 FCC = ../../Library/tools/fcc -O2
-PLATFORM =
+PLATFORM = 
 #PLATFORM = -tzx128
 
 PROGLOAD=`(cat ../../Kernel/platform/config.h; echo PROGLOAD) | cpp -E | tail -n1`
